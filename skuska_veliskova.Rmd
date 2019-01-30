@@ -1,0 +1,79 @@
+---
+title: "T-test a lineárna regresia - Velísková"
+output: html_notebook
+---
+
+Ako prvé si nai¹talujem package "gapminder", ktorý obsahuje údaje o 142 krajinách a to "life expectancy", "GDP per capita" (hrubý domáci produkt), "population" ka¾dých 5 rokov od roku 1952 do 2007.
+
+```{r}
+library(gapminder)
+data(gapminder)
+```
+Funkcia _summary_ po aplikovaní na "gapminder" zhrnie dokopy v¹etky premenné v dataframe.
+Získame minimum, maximum, median, priemer atï. ka¾dej z premenných.
+
+```{r}
+summary(gapminder)
+```
+Ïalej si stiahneme package "dplyr", ktorý umo¾òuje manipulova» s datasetom pomocou svojich funkcii.
+
+```{r}
+library(dplyr)
+```
+Pomocou fukncie _select_ vyberieme premenné, s ktorými budeme pracova».
+```{r}
+gapminder %>%
+  select(country, lifeExp)
+```
+ Pomocou funkcie _filter_ vyfiltrujeme v tomto prípade krajiny (riadky), ktoré chceme porovna». _Groupby_ zabezpeèí zhroma¾denie údajov podµa kritéria (country). Nakoniec zosumarizujeme dáta podµa priemernej doby ¾ivota, ktorú definujeme ako priemer "life expactancy".
+ 
+```{r}
+gapminder %>%
+  select(country, lifeExp) %>%
+  filter(country == "South Africa" |
+           country == "Ireland") %>%
+  group_by(country) %>%
+  summarise(Average_life = mean(lifeExp))
+```
+Teraz chcem zisti», èi je rozdiel v priemernej då¾ke ¾ivota ¹tatisticky signifikantný. Vytvoríme nový dataframe "df1".
+ 
+```{r}
+df1 <- gapminder %>%
+  select(country, lifeExp) %>%
+  filter(country == "South Africa" |
+          country =="Ireland")
+```
+
+Na dataframe "df1" aplikujeme t-test a porovnáme "lifeExp" a "country". Tým zistíme, ¾e je rozdiel ¹tatisticky signifikantný.
+
+```{r}
+t.test(data = df1, lifeExp~country)
+```
+ Z t-testu vidíme, ¾e p hodnota je veµmi malá a teda rozdiel medzi krajinami je ¹tatisticky signifikantný. Rozdiel medzi dobami ¾ivota je v intervale 15,07 a 22,97 roka. 
+ 
+ Na vizualizáciu dát pou¾ijeme package _ggplot2_.
+```{r}
+library(ggplot2)
+```
+ Vyfiltrujeme dáta pomocou GDP per capita. Pomocou _aes_ urèíme, èo sa bude nachádza» na x-ovej osi, na y-ovej osi, farbu urèíme podµa kontinentu a veµkos» bodiek bude daná populáciou. Vykreslíme graf pomocou _geom_point_ a _geom_smooth_ a pou¾ijeme _facet_wrap_ na oddelenie jednotlivých kontinentov pre prehµadnej¹ie zobrazenie.
+```{r}
+gapminder %>%
+  filter(gdpPercap <50000) %>%
+  ggplot(aes(x=log(gdpPercap), y=lifeExp, col=continent, size=pop))+
+  geom_point(alpha=0.3)+
+  geom_smooth(method=lm)+
+  facet_wrap(~continent)
+```
+Pomocou _lm_ (linear model) zistíme koeficienty.
+```{r}
+lm(lifeExp~gdpPercap)
+```
+Zosumerizujeme, získame ïal¹ie údaje a èi sú ¹tatisticky signifikantné.
+```{r}
+summary(lm(lifeExp~gdpPercap))
+```
+Prípadne pou¾ijeme multivariaènú analýzum kde mô¾eme porovna» viaceré premenné naraz.
+```{r}
+summary(lm(lifeExp~gdpPercap+pop))
+```
+
